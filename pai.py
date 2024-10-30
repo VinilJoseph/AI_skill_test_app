@@ -1,7 +1,4 @@
 import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
@@ -54,6 +51,16 @@ MARKETING_TOPICS = {
                 "D": "Print Media"
             },
             "correct": "A"
+        },
+        {
+            "question": "What is the primary purpose of SEO?",
+            "options": {
+                "A": "To increase website loading speed",
+                "B": "To improve search engine rankings",
+                "C": "To manage social media posts",
+                "D": "To create email campaigns"
+            },
+            "correct": "B"
         }
     ],
     "Content Strategy": [
@@ -66,6 +73,16 @@ MARKETING_TOPICS = {
                 "D": "Having a large budget"
             },
             "correct": "B"
+        },
+        {
+            "question": "Which metric best indicates content engagement?",
+            "options": {
+                "A": "Number of views",
+                "B": "Time spent on page",
+                "C": "Social media shares",
+                "D": "Number of backlinks"
+            },
+            "correct": "B"
         }
     ],
     "Personal Branding": [
@@ -76,6 +93,16 @@ MARKETING_TOPICS = {
                 "B": "Posting daily content",
                 "C": "Consistency in messaging and values",
                 "D": "Using professional photos"
+            },
+            "correct": "C"
+        },
+        {
+            "question": "What is the best platform for B2B personal branding?",
+            "options": {
+                "A": "TikTok",
+                "B": "Instagram",
+                "C": "LinkedIn",
+                "D": "Facebook"
             },
             "correct": "C"
         }
@@ -92,15 +119,13 @@ if 'current_question' not in st.session_state:
 
 def calculate_topic_scores():
     scores = {}
-    max_scores = {}
     for topic in MARKETING_TOPICS:
         total_questions = len(MARKETING_TOPICS[topic])
         correct = sum(1 for q in range(len(MARKETING_TOPICS[topic]))
                      if st.session_state.answers.get(f"{topic}_{q}") == 
                      MARKETING_TOPICS[topic][q]["correct"])
         scores[topic] = (correct / total_questions) * 100 if total_questions > 0 else 0
-        max_scores[topic] = 100
-    return scores, max_scores
+    return scores
 
 def generate_recommendations(scores):
     recommendations = []
@@ -112,6 +137,21 @@ def generate_recommendations(scores):
         else:
             recommendations.append(f"🌟 Excellent understanding of {topic}!")
     return recommendations
+
+def display_results_chart(scores):
+    # Create two columns for the chart
+    chart_data = {
+        "Topics": list(scores.keys()),
+        "Scores": list(scores.values())
+    }
+    
+    # Display bar chart using Streamlit
+    st.bar_chart(scores)
+    
+    # Display numeric scores
+    st.subheader("Detailed Scores:")
+    for topic, score in scores.items():
+        st.write(f"{topic}: {score:.1f}%")
 
 def main():
     st.title('📊 Marketing Knowledge Assessment')
@@ -160,23 +200,11 @@ def main():
         st.success("Assessment Complete! 🎉")
         
         # Calculate and display scores
-        scores, max_scores = calculate_topic_scores()
+        scores = calculate_topic_scores()
         
-        # Create score visualization
-        fig = go.Figure(data=[
-            go.Bar(name='Your Score', x=list(scores.keys()), y=list(scores.values())),
-            go.Bar(name='Maximum Score', x=list(max_scores.keys()), y=list(max_scores.values()))
-        ])
-        
-        fig.update_layout(
-            title='Your Performance by Topic',
-            barmode='group',
-            yaxis_title='Score (%)',
-            xaxis_title='Topics',
-            showlegend=True
-        )
-        
-        st.plotly_chart(fig)
+        # Display results
+        st.subheader("Your Performance")
+        display_results_chart(scores)
         
         # Display recommendations
         st.subheader("Recommendations")
@@ -199,8 +227,9 @@ This assessment evaluates your marketing knowledge across multiple domains:
 - Digital Marketing Fundamentals
 - Content Strategy
 - Personal Branding
-- Social Media Marketing
-- SEO and Analytics
+
+Each section contains multiple-choice questions to test your understanding.
+Your results will show your strengths and areas for improvement.
 """)
 
 if __name__ == "__main__":
